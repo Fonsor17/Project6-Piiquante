@@ -1,7 +1,7 @@
 const Sauce = require('../models/sauce');
 
 exports.getAllSauces = (req, res, next) => {
-    console.log(req);
+    // console.log(req);
     Sauce.find().then(
       (sauces) => {
         res.status(200).json(sauces);
@@ -33,15 +33,14 @@ exports.getOneSauce = (req, res, next) => {
 
 exports.modifySauce = (req, res, next) => {
     // console.log(req.params);
-    console.log(req.body);
-    console.log(req.params._id);
-    const sauce = new Sauce({ _id: req.params._id });
-    if (req.fie) {
-      req.body.sauce = JSON.parse(req.body.sauce);
-      console.log(req.body.sauce);
-      console.log(req.file.filename);
+    // console.log(req.body);
+    // console.log(req.params._id);
+    let sauce = new Sauce({ _id: req.params._id });
+    if (req.file) {
       const url = req.protocol + '://' + req.get('host');
-      const sauce = {
+      req.body.sauce = JSON.parse(req.body.sauce);
+      // console.log(req.file.filename);
+      sauce = {
         _id: req.params.id,
         name: req.body.sauce.name,
         manufacturer: req.body.sauce.manufacturer,
@@ -49,24 +48,26 @@ exports.modifySauce = (req, res, next) => {
         mainPepper: req.body.sauce.mainPepper,
         imageUrl: url + '/images/' + req.file.filename,
         heat: req.body.sauce.heat,
-        likes: 0,
-        dislikes: 0,
-        usersLiked: [],
-        usersDisliked: [],
+        // likes: 0,
+        // dislikes: 0,
+        // usersLiked: [],
+        // usersDisliked: [],
         userId: req.body.sauce.userId,
       };
     } else {
-      const sauce = {
+      sauce = {
         _id: req.params.id,
         name: req.body.name,
         manufacturer: req.body.manufacturer,
         description: req.body.description,
         mainPepper: req.body.mainPepper,
-        imageUrl: req.body.imageUrl,
+        // imageUrl: req.body.imageUrl,
         heat: req.body.heat,
         userId: req.body.userId,
       };
     }
+    console.log('SAUCE:')
+    console.log(sauce);
     Sauce.updateOne({_id: req.params.id}, sauce).then(
       () => {
         res.status(201).json({
