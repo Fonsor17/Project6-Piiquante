@@ -1,8 +1,9 @@
 const Sauce = require('../models/sauce');
+const fs = require('fs');
 
+//Return an array with all the sauce from the database
 exports.getAllSauces = (req, res, next) => {
-    // console.log(req);
-    Sauce.find().then(
+    Sauce.find().then( 
       (sauces) => {
         res.status(200).json(sauces);
       }
@@ -15,6 +16,7 @@ exports.getAllSauces = (req, res, next) => {
     );
 };
 
+//Return just one sauce object
 exports.getOneSauce = (req, res, next) => {
     Sauce.findOne({
       _id: req.params.id
@@ -31,15 +33,14 @@ exports.getOneSauce = (req, res, next) => {
     );
 };
 
+//Updating an existing sauce
 exports.modifySauce = (req, res, next) => {
-    // console.log(req.params);
-    // console.log(req.body);
-    // console.log(req.params._id);
+
     let sauce = new Sauce({ _id: req.params._id });
+    //If the photo is changed
     if (req.file) {
       const url = req.protocol + '://' + req.get('host');
       req.body.sauce = JSON.parse(req.body.sauce);
-      // console.log(req.file.filename);
       sauce = {
         _id: req.params.id,
         name: req.body.sauce.name,
@@ -48,12 +49,9 @@ exports.modifySauce = (req, res, next) => {
         mainPepper: req.body.sauce.mainPepper,
         imageUrl: url + '/images/' + req.file.filename,
         heat: req.body.sauce.heat,
-        // likes: 0,
-        // dislikes: 0,
-        // usersLiked: [],
-        // usersDisliked: [],
         userId: req.body.sauce.userId,
       };
+    //If no photo is loaded
     } else {
       sauce = {
         _id: req.params.id,
@@ -61,13 +59,10 @@ exports.modifySauce = (req, res, next) => {
         manufacturer: req.body.manufacturer,
         description: req.body.description,
         mainPepper: req.body.mainPepper,
-        // imageUrl: req.body.imageUrl,
         heat: req.body.heat,
         userId: req.body.userId,
       };
     }
-    console.log('SAUCE:')
-    console.log(sauce);
     Sauce.updateOne({_id: req.params.id}, sauce).then(
       () => {
         res.status(201).json({
@@ -83,6 +78,7 @@ exports.modifySauce = (req, res, next) => {
     );
 };
 
+//Deleting a sauce
 exports.deleteSauce = (req, res, next) => {
   Sauce.findOne({ _id: req.params.id }).then(
     (sauce) => {
@@ -91,11 +87,14 @@ exports.deleteSauce = (req, res, next) => {
           error: new Error(' Not Found!')
         });
       }
+      //Checking the userID is the same of the sauce to not allow not authoized account to delete it
       if (sauce.userId !== req.auth.userId) {
         return res.status(401).json({
           error: new Error('Request not authorized!')
         });
       }
+      const filename = sauce.imageUrl.split('/images/')[1];
+      fs.unlink('images/' + filename, () => {
       Sauce.deleteOne({_id: req.params.id}).then(
         () => {
           res.status(200).json({
@@ -109,12 +108,14 @@ exports.deleteSauce = (req, res, next) => {
           });
         }
       );
+
     }
   );
+});
 };
 
+//Creating a new sauce
 exports.createSauce = (req, res, next) => {
-    // console.log(req.body);
     req.body.sauce = JSON.parse(req.body.sauce);
     console.log(req.body.sauce);
     console.log(req.file.filename);
@@ -146,46 +147,40 @@ exports.createSauce = (req, res, next) => {
   });
 };
 
+//Like and Dislike menaging
 exports.like = (req, res, next) => {
     Sauce.findOne({
         _id: req.params.id
       }).then((sauce) => {
         userId = req.body.userId;
+        //If the sauce is liked
         if (req.body.like === 1)
         {   
-            console.log('1111111111');
             sauce.likes ++;
             sauce.usersLiked.push(userId);
-            // sauce.save();
-            console.log(sauce.usersLiked);
+        //If the sauce is disliked
         } else if (req.body.like === -1) {
-            console.log('-1-1-1-1-1-1');
             sauce.dislikes ++;
             sauce.usersDisliked.push(userId);
-            // sauce.save();
+        //If the like/dislike is canceled
         } else {
-            console.log('00000000000');
             userIdLike = sauce.usersLiked.find((el) => el === userId);
             userIdDislike = sauce.usersDisliked.find((el) => el === userId)
-            console.log(userIdLike);
+            //If the user is canceling his like
             if (userIdLike) {
             let index = sauce.usersLiked.indexOf(userIdLike);
             sauce.usersLiked.splice(index, 1);
-            console.log(sauce.usersLiked + 'post rimozione');
             sauce.likes --;
-            // sauce.save();
-            } else if (userIdDislike) {
+            console.log('like removed')
+            //If the user is canceling his dislike
+            } if (userIdDislike) {
               let index = sauce.usersDisliked.indexOf(userIdDislike);
               sauce.usersDisliked.splice(index, 1);
-              console.log(sauce.usersDisliked + 'post rimozione');
               sauce.dislikes --;
-              // sauce.save();
-            } else {
-              console.log('non succede nulla')
+              console.log('dislike removed')
             }
           } 
           sauce.save();
-        console.log('like rimosso')
       }).then(
         () => {
           res.status(201).json({

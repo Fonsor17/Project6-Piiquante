@@ -16,6 +16,7 @@ mongoose.connect('mongodb+srv://ferratafrancesco:17Onizuka22@cluster0.2ymkizv.mo
     console.error(error);
   });
 
+// Allow CORS
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content, Accept, Content-Type, Authorization');
@@ -25,8 +26,10 @@ app.use((req, res, next) => {
 
 app.use(express.json());
 
+// Telling Express to server the directory "images" when it receives a request to /images
 app.use('/images', express.static(path.join(__dirname, 'images')));
 
+// Splitting the routes
 app.use('/api/sauces', saucesRoutes);
 app.use('/api/auth', userRoutes);
 
